@@ -35,13 +35,18 @@ def db_to_json(filename=None):
     if filename is None:
         filename = f'clothes_db.json'
     tables = (['category', 'preset_category', 'preset',
-               'male_female', 'place', 'clothes_piece'])
+               'male_female', 'place', 'clothes_piece', 'supertype'])
     big_json_data = {}
     for table in tables:
         cursor.execute(f'SELECT * FROM {table}')
         row_headers = [x[0] for x in cursor.description]
         json_data = ([dict(zip(row_headers, row))
                       for row in cursor.fetchall()])
+        for key in json_data:
+            #print(key)
+            for valkey in key:
+                if isinstance(key[valkey], date):
+                    key[valkey] = str(key[valkey])
         big_json_data[table] = json_data
     with open(filename, 'w+') as jsonfile:
         json.dump(big_json_data, jsonfile, ensure_ascii=False,
@@ -117,6 +122,25 @@ def create_query_and_select(table, show_query=False, **kwargs):
     return
 
 
+def select_specific_clothes(value, show_query = True):
+    global connection
+    global cursor
+    select_query = f'''select * from clothes_piece
+                      where clothes_id in
+                    (select (clothes_piece.clothes_id)
+                     from clothes_piece join category
+                     where clothes_piece.category_id = 
+                     (select category.category_id
+                    where category.category_name = 
+                    {value!r}))'''
+    if show_query:
+        print(select_query)
+    cursor.execute(select_query)
+    output = prettytable.from_db_cursor(cursor)
+    print(output)
+    return
+
+
 def insert_to_table(table, insert_query, to_insert):
     global connection
     global cursor
@@ -169,7 +193,6 @@ def create_query_and_insert(table, show_query=False, **kwargs):
         print(insert_query)
         print(to_insert)
     insert_to_table(table, insert_query, to_insert)
-    main_menu()
     return
 
 
@@ -187,7 +210,7 @@ def get_columns_info(table):
     cursor.execute(f'describe {table};')
     columns = cursor.fetchall()
     for col in columns:
-        print(col)
+        #print(col)
         if col[5] != 'auto_increment':
             if col[2] == 'YES' or col[4] is not None:
                 if col[4] is not None:
@@ -234,10 +257,10 @@ def select_table_from_db(flag='select'):
     print(f'\n0. Back')
     while True:
         table_num = input('Type a digit to open the corresponding table:\n')
-        if table_num.isdigit():
+        if table_num.isdecimal():
 
             if int(table_num) in range(1, len(tables)+1):
-                select_from_table(tables[int(table_num)-1], flag)
+                operate_table(tables[int(table_num)-1], flag)
                 break
             elif int(table_num) == 0:
                 main_menu()
@@ -251,7 +274,7 @@ def select_table_from_db(flag='select'):
     return
 
 
-def select_from_table(table, flag='select'):
+def operate_table(table, flag='select'):
     global connection
     global cursor
     tables = []
@@ -277,14 +300,14 @@ def select_from_table(table, flag='select'):
             print(f'\n0. Back')
             attr_num = input(
                 'Type a digit to add the corresponding condition:\n')
-            if attr_num.isdigit():
+            if attr_num.isdecimal():
                 if int(attr_num) in range(1, len(columns)+1):
                     while True:
                         print(
                             f'1. Add possible condition to {list(kwargs)[int(attr_num) - 1]}')
                         print(f'\n0. Back')
                         val = input('Type...\n')
-                        if val.isdigit():
+                        if val.isdecimal():
                             if int(val) == 1:
                                 print(kwargs[list(kwargs)[int(attr_num) - 1]])
                                 cond = input('Type a new condition value...\n')
@@ -313,7 +336,7 @@ def select_from_table(table, flag='select'):
             elif attr_num == 'S' or attr_num == 's':
                 print(kwargs)
                 create_query_and_select(table, True, **kwargs)
-                pak = input('press any key to continue...\n')
+                input('press any key to continue...\n')
 
             elif attr_num == 'C' or attr_num == 'c':
                 for key in kwargs:
@@ -334,7 +357,7 @@ def select_from_table(table, flag='select'):
             choice = input('Type...\n')
             cancelled = False
             newkwargs = {}
-            if choice.isdigit():
+            if choice.isdecimal():
                 if int(choice) == 1:
                     for i in range(len(columns)):
                         print(f'{i+1}. {columns[i]}')
@@ -346,6 +369,12 @@ def select_from_table(table, flag='select'):
                             elif val == 'cancel' or val == '':
                                 cancelled = True
                                 break
+                            elif val.isdecimal():
+                                if int(val) > 255 or int(val) < 0:
+                                    print('Warining! This may be out of bounds! Use at your own risk!')
+                                    newkwargs[list(kwargs)[i]] = val
+                                else:
+                                    newkwargs[list(kwargs)[i]] = val
                             else:
                                 newkwargs[list(kwargs)[i]] = val
                         else:
@@ -354,6 +383,12 @@ def select_from_table(table, flag='select'):
                             if val in ['cancel', '', '*']:
                                 cancelled = True
                                 break
+                            if val.isdecimal():
+                                if int(val) > 255 or int(val) < 0:
+                                    print('Warining! This may be out of bounds! Use at your own risk!')
+                                    newkwargs[list(kwargs)[i]] = val
+                                else:
+                                    newkwargs[list(kwargs)[i]] = val
                             else:
                                 newkwargs[list(kwargs)[i]] = val
                     print('\n')
@@ -362,7 +397,7 @@ def select_from_table(table, flag='select'):
                         print('1. Confirm insert operation')
                         print('\n0. Cancel and go back\n')
                         confirm = input('Confirm or cancel?\n')
-                        if confirm.isdigit():
+                        if confirm.isdecimal():
                             if int(confirm) == 1:
                                 create_query_and_insert(
                                     table, True, **newkwargs)
@@ -411,9 +446,10 @@ def main_menu():
         print('3. Convert DB into json')
         print('4. Select info from a table')
         print('5. Insert new data into a table')
+        print('6. Select all pieces of clothes with a specific category')
         print('\n0. Quit')
         choice = input('Choose an option:\n')
-        if choice.isdigit():
+        if choice.isdecimal():
             if int(choice) == 1:
                 for table in tables:
                     print(table)
@@ -430,7 +466,11 @@ def main_menu():
                 break
             elif int(choice) == 5:
                 select_table_from_db('insert')
-                break
+                continue
+            elif int(choice) == 6:
+                value = input('Insert category value:\n')
+                select_specific_clothes(value)
+                continue
             elif int(choice) == 0:
                 break
             else:
@@ -450,11 +490,12 @@ if __name__ == '__main__':
                                              password='magoga100')
         cursor = connection.cursor(prepared=True)
         main_menu()
-        # print(get_columns_info('clothes_piece'))
+        #select_specific_clothes('tshirt')
+        #print(get_columns_info('clothes_piece'))
         #create_query_and_insert('place', True, type='very_big_chair')
-        # db_to_json()
-        #create_query_and_select('clothes_piece', show_query=True, color='black', size=[])
-        # closing database connection
+        #db_to_json()
+        #create_query_and_select('clothes_piece', show_query=True, color=['black', 'yellow'], size=[])
+        # closing database connection0
         if(connection.is_connected()):
             cursor.close()
             connection.close()

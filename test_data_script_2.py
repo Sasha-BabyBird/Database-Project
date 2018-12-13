@@ -111,7 +111,9 @@ def insert_testdata():
     records_to_insert = [('black', 'M', 2017, 1, 1, 2),
                         ('blue', 'L', 2015, 2, 1, 1),
                         ('yellow', 'M', 2014, 1, 3, 3),
-                        ('black', '52', 2016, 3, 3, 1)]
+                        ('black', '52', 2016, 3, 3, 1),
+                        ('red', 'S', 2012, 2, 1, 4),
+                        ('blue', 'M', 2015, 2, 1, 5)]
     insert_to_table('clothes_piece', insert_query, records_to_insert)
 
 
