@@ -495,7 +495,8 @@ if __name__ == '__main__':
         #create_query_and_insert('place', True, type='very_big_chair')
         #db_to_json()
         #create_query_and_select('clothes_piece', show_query=True, color=['black', 'yellow'], size=[])
-        # closing database connection0
+		
+        #closing database connection
         if(connection.is_connected()):
             cursor.close()
             connection.close()
