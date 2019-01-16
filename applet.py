@@ -371,7 +371,7 @@ def operate_table(table, flag='select'):
                                 break
                             elif val.isdecimal():
                                 if int(val) > 255 or int(val) < 0:
-                                    print('Warining! This may be out of bounds! Use at your own risk!')
+                                    print('Warning! This may be out of bounds! Use at your own risk!')
                                     newkwargs[list(kwargs)[i]] = val
                                 else:
                                     newkwargs[list(kwargs)[i]] = val
@@ -385,7 +385,7 @@ def operate_table(table, flag='select'):
                                 break
                             if val.isdecimal():
                                 if int(val) > 255 or int(val) < 0:
-                                    print('Warining! This may be out of bounds! Use at your own risk!')
+                                    print('Warning! This may be out of bounds! Use at your own risk!')
                                     newkwargs[list(kwargs)[i]] = val
                                 else:
                                     newkwargs[list(kwargs)[i]] = val
