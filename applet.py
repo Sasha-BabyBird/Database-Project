@@ -487,7 +487,8 @@ if __name__ == '__main__':
         connection = mysql.connector.connect(host='localhost',
                                              database='clothes',
                                              user='root',
-                                             password='magoga100')
+                                             password='magoga100',
+                                             use_pure=True)
         cursor = connection.cursor(prepared=True)
         main_menu()
         #select_specific_clothes('tshirt')
