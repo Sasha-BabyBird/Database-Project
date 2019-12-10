@@ -122,17 +122,16 @@ def create_query_and_select(table, show_query=False, **kwargs):
     return
 
 
-def select_specific_clothes(value, show_query = True):
+def select_specific_clothes(value, show_query=True):
     global connection
     global cursor
-    select_query = f'''select * from clothes_piece
-                      where clothes_id in
-                    (select (clothes_piece.clothes_id)
-                     from clothes_piece join category
-                     where clothes_piece.category_id = 
-                     (select category.category_id
-                    where category.category_name = 
-                    {value!r}))'''
+    select_query = f'''select clothes_piece.*
+                       from clothes_piece
+                       join category
+                       on clothes_piece.category_id =
+                       category.category_id
+                       where category_name =
+                       {value!r}'''
     if show_query:
         print(select_query)
     cursor.execute(select_query)
